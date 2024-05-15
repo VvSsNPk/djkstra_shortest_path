@@ -118,7 +118,7 @@ impl Display for Node{
 #[derive(Hash,Eq,PartialEq)]
 struct Pair{
     node: Node,
-    store: Vec<Edge>
+    store: Vec<Edge>,
 }
 
 impl Pair {
