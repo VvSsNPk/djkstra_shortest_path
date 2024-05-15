@@ -57,7 +57,7 @@ pub fn create_graph(path: &PathBuf,str: &str) -> Result<Graph,Box<dyn Error>>{
         for j in 0..(i.len()-1){
             let (node,_number,_code,_islno,_,current_departure) = i[j].clone();
             let (node2, number2, _code2, islno2,next_arrivat,_) = i[j+1].clone();
-            let cost ;
+            let mut cost = TimeDelta::seconds(0) ;
             //println!("{}",current_departure);
             let time1 = NaiveTime::parse_from_str(current_departure.as_str(),"%H:%M:%S").unwrap();
             let time2 = NaiveTime::parse_from_str(next_arrivat.as_str(),"%H:%M:%S").unwrap();
@@ -69,8 +69,6 @@ pub fn create_graph(path: &PathBuf,str: &str) -> Result<Graph,Box<dyn Error>>{
                 } else {
                     cost = time2 - time1 + TimeDelta::try_hours(24).unwrap();
                 }
-            } else{
-                continue;
             }
             let x = cost.num_seconds();
             graph.add_node(Node::new(node.clone()));
