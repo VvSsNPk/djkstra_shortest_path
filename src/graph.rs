@@ -47,7 +47,7 @@ impl Graph{
         let x = distance_tracker.entry(start.clone()).or_insert(0);
         *x =0;
         let mut pair = Pair::new(start.clone());
-        let edge = Edge::new(start.clone(),0,String::new(),0);
+        let edge = Edge::new(start.clone(),0,String::from("start"),0);
         pair.store.push(edge);
         frontier.push(pair);
         while let Some(p) =frontier.pop(){
@@ -115,7 +115,7 @@ impl Display for Node{
     }
 }
 
-#[derive(Hash,Eq,PartialEq)]
+#[derive(Hash,Eq,PartialEq,Clone)]
 pub struct Pair{
     node: Node,
     pub store: Vec<Edge>,
