@@ -38,7 +38,7 @@ impl Graph{
         }
     }
 
-    pub fn search_graph(&mut self, start: Node, goal: Node) -> Option<Vec<Edge>>{
+    pub fn search_graph(&mut self, start: Node, goal: Node) -> Option<Pair>{
         let mut frontier = BinaryHeap::new();
         let mut distance_tracker = HashMap::new();
         for i in self.graph.keys(){
@@ -47,21 +47,21 @@ impl Graph{
         let x = distance_tracker.entry(start.clone()).or_insert(0);
         *x =0;
         let mut pair = Pair::new(start.clone());
-        let edge = Edge::new(start.clone(),1,String::new(),0);
+        let edge = Edge::new(start.clone(),0,String::new(),0);
         pair.store.push(edge);
         frontier.push(pair);
         while let Some(p) =frontier.pop(){
             if p.node == goal{
-                return Some(p.store);
+                return Some(p);
             }
-            if p.sum_of_cost()-1 > distance_tracker.get(&p.node).copied().unwrap(){
+            if p.sum_of_cost() > distance_tracker.get(&p.node).copied().unwrap(){
                 continue;
             }
             for edge in self.graph.get_mut(&p.node).unwrap(){
                 let mut next = Pair::new(edge.node.clone());
                 next.store.extend(p.store.clone());
                 next.store.push(edge.clone());
-                let x = next.sum_of_cost() -1;
+                let x = next.sum_of_cost();
                 if x < distance_tracker.get(&edge.node).copied().unwrap(){
                     *distance_tracker.entry(edge.node.clone()).or_insert(0) = x;
                     frontier.push(next);
@@ -116,9 +116,9 @@ impl Display for Node{
 }
 
 #[derive(Hash,Eq,PartialEq)]
-struct Pair{
+pub struct Pair{
     node: Node,
-    store: Vec<Edge>,
+    pub store: Vec<Edge>,
 }
 
 impl Pair {
@@ -137,12 +137,12 @@ impl Pair {
 
 impl PartialOrd for Pair{
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(other.store.len().cmp(&self.store.len()))
+        Some(other.sum_of_cost().cmp(&self.sum_of_cost()))
     }
 }
 
 impl Ord for Pair{
     fn cmp(&self, other: &Self) -> Ordering {
-        other.store.len().cmp(&self.store.len())
+        other.sum_of_cost().cmp(&self.sum_of_cost())
     }
 }
