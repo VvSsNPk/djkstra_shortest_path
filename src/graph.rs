@@ -2,7 +2,7 @@ use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap};
 use std::fmt::{Display, Formatter};
 use std::hash::Hash;
-use serde::de::Unexpected::Str;
+
 
 
 pub struct Graph{
@@ -21,7 +21,7 @@ impl Graph{
     }
 
     pub fn add_edge(&mut self, node: Node,edge: Edge){
-        let mut x = self.graph.entry(node).or_insert(Vec::new());
+        let x = self.graph.entry(node).or_insert(Vec::new());
         if !x.contains(&edge){
             x.push(edge);
         }
@@ -44,7 +44,7 @@ impl Graph{
         for i in self.graph.keys(){
             distance_tracker.insert(i.clone(),usize::MAX);
         }
-        let mut x = distance_tracker.entry(start.clone()).or_insert(0);
+        let x = distance_tracker.entry(start.clone()).or_insert(0);
         *x =0;
         let mut pair = Pair::new(start.clone());
         let edge = Edge::new(start.clone(),0,String::new(),0);
