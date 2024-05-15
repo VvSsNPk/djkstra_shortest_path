@@ -48,7 +48,7 @@ pub fn create_graph(path: &PathBuf) -> Result<Graph,Box<dyn Error>>{
         record.station_code=record.station_code.trim().parse().unwrap();
         record.source_station_code=record.destination_station_code.trim().parse().unwrap();
         let x = map.entry(record.train_name.clone()).or_insert(Vec::new());
-        x.push((record.station_name,record.train_number,record.station_code,record.islno))
+        x.push((record.station_name,record.train_number,record.station_code,record.islno));
     }
     for i in map.values(){
         for j in 0..(i.len()-1){

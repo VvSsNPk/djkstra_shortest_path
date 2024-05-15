@@ -47,22 +47,23 @@ impl Graph{
         let x = distance_tracker.entry(start.clone()).or_insert(0);
         *x =0;
         let mut pair = Pair::new(start.clone());
-        let edge = Edge::new(start.clone(),0,String::new(),0);
+        let edge = Edge::new(start.clone(),1,String::new(),0);
         pair.store.push(edge);
         frontier.push(pair);
         while let Some(p) =frontier.pop(){
             if p.node == goal{
                 return Some(p.store);
             }
-            if p.store.len()-1 > distance_tracker.get(&p.node).copied().unwrap(){
+            if p.sum_of_cost()-1 > distance_tracker.get(&p.node).copied().unwrap(){
                 continue;
             }
             for edge in self.graph.get_mut(&p.node).unwrap(){
                 let mut next = Pair::new(edge.node.clone());
                 next.store.extend(p.store.clone());
                 next.store.push(edge.clone());
-                if next.store.len()-1 < distance_tracker.get(&edge.node).copied().unwrap(){
-                    *distance_tracker.entry(edge.node.clone()).or_insert(0) = next.store.len()-1;
+                let x = next.sum_of_cost() -1;
+                if x < distance_tracker.get(&edge.node).copied().unwrap(){
+                    *distance_tracker.entry(edge.node.clone()).or_insert(0) = x;
                     frontier.push(next);
                 }
             }
