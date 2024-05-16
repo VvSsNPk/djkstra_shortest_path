@@ -1,22 +1,22 @@
 use std::path::PathBuf;
-use djkstra_shortest_path::{create_graph, Problem};
+use djkstra_shortest_path::{create_graph, parse_file, Problem, process_pair};
 use djkstra_shortest_path::graph::{Node, Pair};
 
 fn main() {
+    //parse_file("example-problems.csv").expect("Couldnot work");
     let mut  path = PathBuf::new();
-    path.push("schedule.csv");
-   let mut x = create_graph(&path,"traveltime").unwrap();
-    let y = x.search_graph(Node::new("SRJ".to_string()),Node::new("SNKR".to_string())).unwrap();
-    //println!("{}",y.sum_of_cost());
-    //println!("{:?}",y.store);
-    let mut ans = y.store.clone();
-    let _ = ans.remove(0);
-    //println!("{:?}",ans);
-    let mut grouped_items = Vec::new();
+    path.push("mini-schedule.csv");
+   let mut x = create_graph(&path,"stops").unwrap();
+    let mut y = x.search_graph(Node::new("MDS".to_string()), Node::new("KY".to_string())).unwrap();
+    println!("{}",y.sum_of_cost());
+    println!("{:?}",y.store);
+    let z = process_pair(&mut y.store);
+    //println!("{}",z);
+/*    let mut grouped_items = Vec::new();
     let mut current_group = Vec::new();
-    let mut current_value = ans.get(0).unwrap().train_no.clone();
+    let mut current_value = ans.get(0).unwrap().train_no.clone();*/
 
-    for item in ans{
+/*    for item in ans{
         if item.train_no == current_value{
             current_group.push(item.location);
         }else{
@@ -24,10 +24,10 @@ fn main() {
             current_group = vec![item.location];
             current_value = item.train_no.clone();
         }
-    }
-    for i in grouped_items{
+    }*/
+/*    for i in grouped_items{
         print!("{} : {} -> {};",i.0.strip_prefix("'").unwrap().strip_suffix("'").unwrap(),i.1.first().unwrap()-1,i.1.last().unwrap());
-    }
+    }*/
    /* let mut reader = csv::Reader::from_path("example-problems.csv").unwrap();
     for i in reader.deserialize(){
         let r : Problem = i.unwrap();

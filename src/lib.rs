@@ -62,7 +62,17 @@ struct Solution{
     #[serde(rename="Cost")]
     cost : usize,
 }
+/*impl Iterator for Solution{
+    type Item = usize;
 
+    fn next(&mut self) -> Option<Self::Item> {
+        let current = self.problem_no;
+        self.problem_no = self.next().unwrap();
+        self.next().unwrap() = current + self.next().unwrap();
+
+        Some(current)
+    }
+}*/
 pub fn create_graph(path: &PathBuf,str: &str) -> Result<Graph,Box<dyn Error>>{
     let mut file = csv::Reader::from_path(path)?;
     let mut graph =  Graph::new();
@@ -114,25 +124,34 @@ pub fn parse_file(str: &str) -> Result<(),Box<dyn Error>>{
     problems_file.push(str);
     let mut reader = csv::Reader::from_path(problems_file)?;
     let mut solutions_file = PathBuf::new();
+    solutions_file.push("example-solutions.csv");
     let mut writer = csv::Writer::from_path(solutions_file)?;
     for prob in reader.deserialize(){
         let problem : Problem = prob?;
         let mut schedule_file = PathBuf::new();
-        schedule_file.push(problem.file.trim());
+        schedule_file.push(problem.file.clone().trim());
+        if problem.cost != "stops" && problem.cost != "traveltime"{
+            continue;
+        }
         let mut graph = create_graph(&schedule_file,problem.cost.as_str())?;
         let mut pair = graph.search_graph(Node::new(problem.from),Node::new(problem.to)).unwrap();
-
-
+        let x = process_pair(&mut pair.store);
+        println!("{}",x);
+        writer.serialize(Solution{
+            problem_no: problem.problem,
+            connection: x,
+            cost: pair.sum_of_cost(),
+        })?;
 
     }
-
 
     Ok(())
 }
 
 
-fn process_pair( pair: &mut Vec<Edge>) -> String{
+pub fn process_pair( pair: &mut Vec<Edge>) -> String{
     pair.remove(0);
+
     let mut grouped_items = Vec::new();
     let mut current_group = Vec::new();
     let mut current_value = pair.get(0).unwrap().train_no.clone();
@@ -146,9 +165,20 @@ fn process_pair( pair: &mut Vec<Edge>) -> String{
             current_value = item.train_no.clone();
         }
     }
-
-
-    String::new()
+    let mut result = String::new();
+    for i in grouped_items{
+        println!("{:?}",i);
+        result.push_str(i.0.strip_suffix("'").unwrap().strip_prefix("'").unwrap());
+        result.push_str(" : ");
+        result.push_str(&*(i.1.first().unwrap() - 1).to_string());
+        result.push_str(" -> ");
+        result.push_str(&*i.1.last().unwrap().to_string());
+        result.push_str(" ; ");
+    }
+    result.pop();
+    result.pop();
+    //println!("{}",result);
+    result
 }
 
 
