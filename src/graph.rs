@@ -1,18 +1,18 @@
 use std::cmp::Ordering;
-use std::collections::{BinaryHeap, HashMap};
+use std::collections::{BinaryHeap, BTreeMap, HashMap};
 use std::fmt::{Display, Formatter};
 use std::hash::Hash;
 
 
 
 pub struct Graph{
-    pub graph: HashMap<Node,Vec<Edge>>,
+    pub graph: BTreeMap<Node,Vec<Edge>>,
 }
 
 impl Graph{
     pub fn new() -> Self{
         Self{
-            graph: HashMap::new(),
+            graph: BTreeMap::new(),
         }
     }
 
