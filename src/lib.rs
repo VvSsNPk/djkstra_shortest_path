@@ -165,14 +165,20 @@ pub fn process_pair( pair: &mut Vec<Edge>) -> String{
             current_value = item.train_no.clone();
         }
     }
+    grouped_items.push((current_value,current_group));
     let mut result = String::new();
     for i in grouped_items{
         println!("{:?}",i);
         result.push_str(i.0.strip_suffix("'").unwrap().strip_prefix("'").unwrap());
         result.push_str(" : ");
-        result.push_str(&*(i.1.first().unwrap() - 1).to_string());
+        let mut num = i.1.first().unwrap().clone();
+        if num > 1{
+            num = num -1
+        }
+        result.push_str(&*num.to_string());
         result.push_str(" -> ");
-        result.push_str(&*i.1.last().unwrap().to_string());
+        let mut num2 = i.1.last().unwrap().clone();
+        result.push_str(&*num2.to_string());
         result.push_str(" ; ");
     }
     result.pop();
