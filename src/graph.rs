@@ -6,13 +6,13 @@ use std::hash::Hash;
 
 
 pub struct Graph{
-    pub graph: BTreeMap<Node,Vec<Edge>>,
+    pub graph: HashMap<Node,Vec<Edge>>,
 }
 
 impl Graph{
     pub fn new() -> Self{
         Self{
-            graph: BTreeMap::new(),
+            graph: HashMap::new(),
         }
     }
 

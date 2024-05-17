@@ -84,7 +84,7 @@ pub fn create_graph(path: &PathBuf,str: &str) -> Result<Graph,Box<dyn Error>>{
         record.station_name=record.station_name.trim().parse().unwrap();
         record.train_name=record.train_name.trim().parse().unwrap();
         record.station_code=record.station_code.trim().parse().unwrap();
-        record.source_station_code=record.destination_station_code.trim().parse().unwrap();
+        record.source_station_code=record.source_station_code.trim().parse().unwrap();
         record.arrival_time = record.arrival_time.strip_suffix("'").unwrap().strip_prefix("'").unwrap().to_string();
         record.departure_time = record.departure_time.strip_suffix("'").unwrap().strip_prefix("'").unwrap().to_string();
         let x = map.entry(record.train_name.clone()).or_insert(Vec::new());
