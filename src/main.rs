@@ -7,7 +7,7 @@ fn main() {
    let mut  path = PathBuf::new();
     path.push("schedule.csv");
    let mut x = create_graph(&path,"stops").unwrap();
-    //x.print_graph();
+    x.print_graph();
    let mut y = x.search_graph(Node::new("PDNR".to_string()), Node::new("SIHO".to_string())).unwrap();
     println!("{}",y.sum_of_cost());
     println!("{:?}",y.store);

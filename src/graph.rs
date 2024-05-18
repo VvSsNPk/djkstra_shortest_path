@@ -6,13 +6,13 @@ use std::hash::Hash;
 
 
 pub struct Graph{
-    pub graph: HashMap<Node,Vec<Edge>>,
+    pub graph: BTreeMap<Node,Vec<Edge>>,
 }
 
 impl Graph{
     pub fn new() -> Self{
         Self{
-            graph: HashMap::new(),
+            graph: BTreeMap::new(),
         }
     }
 
@@ -137,7 +137,7 @@ impl Pair {
 
 impl PartialOrd for Pair{
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(other.sum_of_cost().cmp(&self.sum_of_cost()))
+        Some(self.cmp(other))
     }
 }
 

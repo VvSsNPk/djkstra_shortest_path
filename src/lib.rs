@@ -98,18 +98,19 @@ pub fn create_graph(path: &PathBuf,str: &str) -> Result<Graph,Box<dyn Error>>{
             //println!("{}",current_departure);
             let time1 = NaiveTime::parse_from_str(current_departure.as_str(),"%H:%M:%S").unwrap();
             let time2 = NaiveTime::parse_from_str(next_arrivat.as_str(),"%H:%M:%S").unwrap();
-            if str == "stops"{
-                cost = TimeDelta::seconds(1);
-            }else if str == "traveltime" {
-                if time2 > time1 {
-                    cost = time2 - time1
-                } else {
-                    cost = time2 - time1 + TimeDelta::try_hours(24).unwrap();
-                }
+            if time2 > time1 {
+                cost = time2 - time1
+            } else {
+                cost = time2 - time1 + TimeDelta::try_hours(24).unwrap();
+            }
+            let mut x:usize=1;
+            if str == "traveltime" {
+                x = cost.num_seconds() as usize;
+            }else if str == "stops"{
+                x = 1;
             }else{
                 continue;
             }
-            let x = cost.num_seconds();
             graph.add_node(Node::new(code.clone()));
             graph.add_node(Node::new(code2.clone()));
             let edge = Edge::new(Node::new(code2), x as usize, number2, islno2);
