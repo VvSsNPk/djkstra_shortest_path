@@ -62,17 +62,6 @@ struct Solution{
     #[serde(rename="Cost")]
     cost : usize,
 }
-/*impl Iterator for Solution{
-    type Item = usize;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let current = self.problem_no;
-        self.problem_no = self.next().unwrap();
-        self.next().unwrap() = current + self.next().unwrap();
-
-        Some(current)
-    }
-}*/
 pub fn create_graph(path: &PathBuf,str: &str) -> Result<Graph,Box<dyn Error>>{
     let mut file = csv::Reader::from_path(path)?;
     let mut graph =  Graph::new();
@@ -87,7 +76,7 @@ pub fn create_graph(path: &PathBuf,str: &str) -> Result<Graph,Box<dyn Error>>{
         record.source_station_code=record.source_station_code.trim().parse().unwrap();
         record.arrival_time = record.arrival_time.strip_suffix("'").unwrap().strip_prefix("'").unwrap().to_string();
         record.departure_time = record.departure_time.strip_suffix("'").unwrap().strip_prefix("'").unwrap().to_string();
-        let x = map.entry(record.train_name.clone()).or_insert(Vec::new());
+        let x = map.entry(record.train_number.clone()).or_insert(Vec::new());
         x.push((record.station_name,record.train_number,record.station_code,record.islno,record.arrival_time,record.departure_time));
     }
     for i in map.values(){
@@ -98,22 +87,25 @@ pub fn create_graph(path: &PathBuf,str: &str) -> Result<Graph,Box<dyn Error>>{
             //println!("{}",current_departure);
             let time1 = NaiveTime::parse_from_str(current_departure.as_str(),"%H:%M:%S").unwrap();
             let time2 = NaiveTime::parse_from_str(next_arrivat.as_str(),"%H:%M:%S").unwrap();
-            if time2 > time1 {
-                cost = time2 - time1
-            } else {
-                cost = time2 - time1 + TimeDelta::try_hours(24).unwrap();
-            }
+
             let mut x:usize=1;
             if str == "traveltime" {
+                if time2 > time1 {
+                    cost = time2 - time1
+                } else {
+                    cost = time2 - time1 + TimeDelta::try_hours(24).unwrap();
+                }
                 x = cost.num_seconds() as usize;
             }else if str == "stops"{
                 x = 1;
+            }else if str == "price"{
+                x = 0;
             }else{
                 continue;
             }
             graph.add_node(Node::new(code.clone()));
             graph.add_node(Node::new(code2.clone()));
-            let edge = Edge::new(Node::new(code2), x as usize, number2, islno2);
+            let edge = Edge::new(Node::new(code2), x, number2, islno2);
             graph.add_edge(Node::new(code),edge);
         }
     }
@@ -131,17 +123,27 @@ pub fn parse_file(str: &str) -> Result<(),Box<dyn Error>>{
         let problem : Problem = prob?;
         let mut schedule_file = PathBuf::new();
         schedule_file.push(problem.file.clone().trim());
-        if problem.cost != "stops" && problem.cost != "traveltime"{
+        if problem.cost != "stops" && problem.cost != "traveltime" && problem.cost != "price"{
             continue;
         }
         let mut graph = create_graph(&schedule_file,problem.cost.as_str())?;
-        let mut pair = graph.search_graph(Node::new(problem.from),Node::new(problem.to)).unwrap();
+        let mut passer = None;
+        if problem.cost == "price"{
+            passer = Some("price");
+        }
+        let mut pair = graph.search_graph(Node::new(problem.from),Node::new(problem.to),passer).unwrap();
         let x = process_pair(&mut pair.store);
         println!("{}",x);
+        let mut y = 0usize;
+        if problem.cost =="price"{
+            y = pair.sum_of_cost_another();
+        }else{
+            y = pair.sum_of_cost();
+        }
         writer.serialize(Solution{
             problem_no: problem.problem,
             connection: x,
-            cost: pair.sum_of_cost(),
+            cost: y,
         })?;
 
     }

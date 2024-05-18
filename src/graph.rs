@@ -22,9 +22,8 @@ impl Graph{
 
     pub fn add_edge(&mut self, node: Node,edge: Edge){
         let x = self.graph.entry(node).or_insert(Vec::new());
-        if !x.contains(&edge){
-            x.push(edge);
-        }
+        x.push(edge);
+
     }
 
     pub fn print_graph(&self){
@@ -38,7 +37,7 @@ impl Graph{
         }
     }
 
-    pub fn search_graph(&mut self, start: Node, goal: Node) -> Option<Pair>{
+    pub fn search_graph(&mut self, start: Node, goal: Node,param : Option<&str>) -> Option<Pair>{
         let mut frontier = BinaryHeap::new();
         let mut distance_tracker = HashMap::new();
         for i in self.graph.keys(){
@@ -54,14 +53,25 @@ impl Graph{
             if p.node == goal{
                 return Some(p);
             }
-            if p.sum_of_cost() > distance_tracker.get(&p.node).copied().unwrap(){
+            let mut  x = 0usize;
+            if param.is_some(){
+                x = p.sum_of_cost_another();
+            }else{
+                x = p.sum_of_cost();
+            }
+            if x > distance_tracker.get(&p.node).copied().unwrap(){
                 continue;
             }
             for edge in self.graph.get_mut(&p.node).unwrap(){
                 let mut next = Pair::new(edge.node.clone());
                 next.store.extend(p.store.clone());
                 next.store.push(edge.clone());
-                let x = next.sum_of_cost();
+                let mut x =0;
+                if param.is_some() {
+                    x = next.sum_of_cost_another();
+                }else{
+                    x = next.sum_of_cost();
+                }
                 if x < distance_tracker.get(&edge.node).copied().unwrap(){
                     *distance_tracker.entry(edge.node.clone()).or_insert(0) = x;
                     frontier.push(next);
@@ -133,16 +143,40 @@ impl Pair {
     pub fn sum_of_cost(&self) -> usize{
         self.store.iter().map(|s| s.cost).sum()
     }
+
+    pub fn sum_of_cost_another(&self) -> usize{
+        let mut map:HashMap<String,Vec<String>> = HashMap::new();
+        let mut x = self.store.clone();
+        x.remove(0);
+        for i in x{
+            if map.contains_key(&i.train_no){
+                let mut y = map.get_mut(&i.train_no).unwrap();
+                y.push(i.node.station);
+            }else{
+                map.insert(i.train_no,Vec::new());
+            }
+        }
+        let mut count:usize=0;
+        for j in map{
+            if j.1.len() > 9{
+                count+=10;
+            }else{
+                count+=j.1.len();
+            }
+        }
+
+        count
+    }
 }
 
 impl PartialOrd for Pair{
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
+        Some(other.sum_of_cost_another().cmp(&self.sum_of_cost_another()))
     }
 }
 
 impl Ord for Pair{
     fn cmp(&self, other: &Self) -> Ordering {
-        other.sum_of_cost().cmp(&self.sum_of_cost())
+        other.sum_of_cost_another().cmp(&self.sum_of_cost_another())
     }
 }
