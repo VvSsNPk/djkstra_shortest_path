@@ -8,9 +8,9 @@ fn main() {
     path.push("mini-schedule.csv");
    let mut x = create_graph(&path,"stops").unwrap();
     //x.print_graph();
-   let mut y = x.search_graph(Node::new("KBG".to_string()), Node::new("DURG".to_string()),Some("price")).unwrap();
+   let mut y = x.search_graph(Node::new("MDS".to_string()), Node::new("DURG".to_string()),Some("Price")).unwrap();
     println!("{}",y.sum_of_cost_another());
-    //println!("{:?}",y.store);
+    println!("{:?}",y.store);
     let z = process_pair(&mut y.store);
     println!("{}",z);
 

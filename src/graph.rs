@@ -145,32 +145,7 @@ impl Pair {
     }
 
     pub fn sum_of_cost_another(&self) -> usize{
-        let mut x = self.store.clone();
-        x.remove(0);
-        let mut count = 0;
-        let mut curr =0;
-        if !x.is_empty() {
-            let mut current = x.first().unwrap().train_no.clone();
-            for i in x {
-                if i.train_no == current {
-                    curr += 1;
-                } else {
-                    current = i.train_no.clone();
-                    if curr > 9 {
-                        count += 10
-                    } else {
-                        count += curr;
-                    }
-                    curr = 0;
-                }
-            }
-            if curr > 9{
-                count+= 10
-            }else{
-                count+=curr;
-            }
-        }
-        count
+        0
     }
 }
 

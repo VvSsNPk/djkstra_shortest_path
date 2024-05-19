@@ -175,9 +175,7 @@ pub fn process_pair( pair: &mut Vec<Edge>) -> String{
         result.push_str(i.0.strip_suffix("'").unwrap().strip_prefix("'").unwrap());
         result.push_str(" : ");
         let mut num = i.1.first().unwrap().clone();
-        if num > 1{
-            num = num -1
-        }
+        num = num -1;
         result.push_str(&*num.to_string());
         result.push_str(" -> ");
         let mut num2 = i.1.last().unwrap().clone();
