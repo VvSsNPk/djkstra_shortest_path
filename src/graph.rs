@@ -145,33 +145,38 @@ impl Pair {
     }
 
     pub fn sum_of_cost_another(&self) -> usize{
-        let mut map:HashMap<String,Vec<String>> = HashMap::new();
         let mut x = self.store.clone();
         x.remove(0);
-        for i in x{
-            if map.contains_key(&i.train_no){
-                let mut y = map.get_mut(&i.train_no).unwrap();
-                y.push(i.node.station);
+        let mut count = 0;
+        let mut curr =0;
+        if !x.is_empty() {
+            let mut current = x.first().unwrap().train_no.clone();
+            for i in x {
+                if i.train_no == current {
+                    curr += 1;
+                } else {
+                    current = i.train_no.clone();
+                    if curr > 9 {
+                        count += 10
+                    } else {
+                        count += curr;
+                    }
+                    curr = 0;
+                }
+            }
+            if curr > 9{
+                count+= 10
             }else{
-                map.insert(i.train_no,Vec::new());
+                count+=curr;
             }
         }
-        let mut count:usize=0;
-        for j in map{
-            if j.1.len() > 9{
-                count+=10;
-            }else{
-                count+=j.1.len();
-            }
-        }
-
         count
     }
 }
 
 impl PartialOrd for Pair{
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(other.sum_of_cost_another().cmp(&self.sum_of_cost_another()))
+        Some(self.cmp(other))
     }
 }
 
