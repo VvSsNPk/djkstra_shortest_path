@@ -62,9 +62,65 @@ struct Solution{
     #[serde(rename="Cost")]
     cost : usize,
 }
-pub fn create_graph(path: &PathBuf,str: &str) -> Result<Graph,Box<dyn Error>>{
-    let mut file = csv::Reader::from_path(path)?;
+pub fn create_graph_one(path: &PathBuf, str: &str) -> Result<Graph,Box<dyn Error>>{
     let mut graph =  Graph::new();
+    let map = create_map(path)?;
+    for i in map.values(){
+        for j in 0..(i.len()-1){
+            let (node,_number,code,_islno,_,current_departure) = i[j].clone();
+            let (node2, number2, code2, islno2,next_arrivat,_) = i[j+1].clone();
+            let mut cost = TimeDelta::seconds(0) ;
+            let time1 = NaiveTime::parse_from_str(current_departure.as_str(),"%H:%M:%S").unwrap();
+            let time2 = NaiveTime::parse_from_str(next_arrivat.as_str(),"%H:%M:%S").unwrap();
+
+            let mut x:usize=1;
+            if str == "traveltime" {
+                if time2 > time1 {
+                    cost = time2 - time1
+                } else {
+                    cost = time2 - time1 + TimeDelta::try_hours(24).unwrap();
+                }
+                x = cost.num_seconds() as usize;
+            }else {
+                x = 1;
+            }
+            graph.add_node(Node::new(code.clone()));
+            graph.add_node(Node::new(code2.clone()));
+            let edge = Edge::new(Node::new(code2), x, number2, islno2);
+            graph.add_edge(Node::new(code),edge);
+        }
+    }
+    Ok(graph)
+}
+
+pub fn create_graph_two(path: &PathBuf) -> Result<Graph,Box<dyn Error>>{
+    let mut graph = Graph::new();
+    let map = create_map(path)?;
+    for i in map{
+        for j in 0..i.1.len()-1{
+            let (_,number,code,_,_,_) = i.1[j].clone();
+            graph.add_node(Node::new(code.clone()));
+            let mut c = 0;
+            for m in j+1..i.1.len(){
+                c+=1;
+                let (_,_,code2,islno,_,_) = i.1[m].clone();
+                graph.add_node(Node::new(code2.clone()));
+                let mut cost  = 0;
+                if c > 9{
+                    cost = 10
+                }else{
+                    cost = c;
+                }
+                let edge = Edge::new(Node::new(code2),cost,number.clone(),islno);
+                graph.add_edge(Node::new(code.clone()),edge);
+            }
+        }
+    }
+    Ok(graph)
+}
+
+pub fn create_map(path: &PathBuf) -> Result<HashMap<String, Vec<(String, String, String, u32, String, String)>>, Box<dyn Error>> {
+    let mut file = csv::Reader::from_path(path)?;
     let mut map = HashMap::new();
     for result in file.deserialize(){
         let mut record:Record = result?;
@@ -79,37 +135,7 @@ pub fn create_graph(path: &PathBuf,str: &str) -> Result<Graph,Box<dyn Error>>{
         let x = map.entry(record.train_number.clone()).or_insert(Vec::new());
         x.push((record.station_name,record.train_number,record.station_code,record.islno,record.arrival_time,record.departure_time));
     }
-    for i in map.values(){
-        for j in 0..(i.len()-1){
-            let (node,_number,code,_islno,_,current_departure) = i[j].clone();
-            let (node2, number2, code2, islno2,next_arrivat,_) = i[j+1].clone();
-            let mut cost = TimeDelta::seconds(0) ;
-            //println!("{}",current_departure);
-            let time1 = NaiveTime::parse_from_str(current_departure.as_str(),"%H:%M:%S").unwrap();
-            let time2 = NaiveTime::parse_from_str(next_arrivat.as_str(),"%H:%M:%S").unwrap();
-
-            let mut x:usize=1;
-            if str == "traveltime" {
-                if time2 > time1 {
-                    cost = time2 - time1
-                } else {
-                    cost = time2 - time1 + TimeDelta::try_hours(24).unwrap();
-                }
-                x = cost.num_seconds() as usize;
-            }else if str == "stops"{
-                x = 1;
-            }else if str == "price"{
-                x = 0;
-            }else{
-                continue;
-            }
-            graph.add_node(Node::new(code.clone()));
-            graph.add_node(Node::new(code2.clone()));
-            let edge = Edge::new(Node::new(code2), x, number2, islno2);
-            graph.add_edge(Node::new(code),edge);
-        }
-    }
-    Ok(graph)
+    Ok(map)
 }
 
 pub fn parse_file(str: &str) -> Result<(),Box<dyn Error>>{
@@ -126,26 +152,27 @@ pub fn parse_file(str: &str) -> Result<(),Box<dyn Error>>{
         if problem.cost != "stops" && problem.cost != "traveltime" && problem.cost != "price"{
             continue;
         }
-        let mut graph = create_graph(&schedule_file,problem.cost.as_str())?;
-        let mut passer = None;
-        if problem.cost == "price"{
-            passer = Some("price");
-        }
-        let mut pair = graph.search_graph(Node::new(problem.from),Node::new(problem.to),passer).unwrap();
-        let x = process_pair(&mut pair.store);
-        println!("{}",x);
-        let mut y = 0usize;
-        if problem.cost =="price"{
-            y = pair.sum_of_cost_another();
+        let mut graph;
+        if problem.cost == "stops" || problem.cost == "traveltime" {
+            graph = create_graph_one(&schedule_file, problem.cost.as_str())?;
         }else{
-            y = pair.sum_of_cost();
+            graph = create_graph_two(&schedule_file)?;
         }
-        writer.serialize(Solution{
+        let mut pair = graph.search_graph(Node::new(problem.from), Node::new(problem.to)).unwrap();
+        let mut x;
+        if problem.cost == "stops" || problem.cost == "traveltime" {
+            x = process_pair(&mut pair.store);
+        }else {
+            x = process_pair_two(&mut pair.store);
+        }
+        println!("{}", x);
+        let mut y = 0usize;
+        y = pair.sum_of_cost();
+        writer.serialize(Solution {
             problem_no: problem.problem,
             connection: x,
             cost: y,
         })?;
-
     }
 
     Ok(())
@@ -153,6 +180,47 @@ pub fn parse_file(str: &str) -> Result<(),Box<dyn Error>>{
 
 
 pub fn process_pair( pair: &mut Vec<Edge>) -> String{
+    let grouped_items = get_group_items(pair);
+    let mut result = String::new();
+    for i in grouped_items{
+        //println!("{:?}",i);
+        result.push_str(i.0.strip_suffix("'").unwrap().strip_prefix("'").unwrap());
+        result.push_str(" : ");
+        let mut num = i.1.first().unwrap().clone();
+        num = num -1;
+        result.push_str(&*num.to_string());
+        result.push_str(" -> ");
+        let mut num2 = i.1.last().unwrap().clone();
+        result.push_str(&*num2.to_string());
+        result.push_str(" ; ");
+    }
+    result.pop();
+    result.pop();
+    result
+}
+
+pub fn process_pair_two(pair: &mut Vec<Edge>) -> String{
+    let mut result = String::new();
+    let mut x = pair.clone();
+    x.remove(0);
+    if !x.is_empty(){
+        for i in x{
+            result += i.train_no.clone().strip_suffix("'").unwrap().strip_prefix("'").unwrap();
+            result.push_str(" : ");
+            let m = i.location - i.cost as u32;
+            result.push_str(&*m.to_string());
+            result.push_str(" -> ");
+            let p = i.location;
+            result.push_str(&*p.to_string());
+            result.push_str(" ; ");
+        }
+    }
+    result.pop();
+    result.pop();
+    result
+}
+
+pub fn get_group_items(pair : &mut Vec<Edge>) -> Vec<(String,Vec<u32>)>{
     pair.remove(0);
 
     let mut grouped_items = Vec::new();
@@ -169,23 +237,7 @@ pub fn process_pair( pair: &mut Vec<Edge>) -> String{
         }
     }
     grouped_items.push((current_value,current_group));
-    let mut result = String::new();
-    for i in grouped_items{
-        println!("{:?}",i);
-        result.push_str(i.0.strip_suffix("'").unwrap().strip_prefix("'").unwrap());
-        result.push_str(" : ");
-        let mut num = i.1.first().unwrap().clone();
-        num = num -1;
-        result.push_str(&*num.to_string());
-        result.push_str(" -> ");
-        let mut num2 = i.1.last().unwrap().clone();
-        result.push_str(&*num2.to_string());
-        result.push_str(" ; ");
-    }
-    result.pop();
-    result.pop();
-    //println!("{}",result);
-    result
+    return grouped_items
 }
 
 

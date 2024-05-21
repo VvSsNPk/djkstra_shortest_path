@@ -1,5 +1,5 @@
 use std::cmp::Ordering;
-use std::collections::{BinaryHeap, BTreeMap, HashMap};
+use std::collections::{BinaryHeap, BTreeMap, HashMap, HashSet};
 use std::fmt::{Display, Formatter};
 use std::hash::Hash;
 
@@ -37,7 +37,7 @@ impl Graph{
         }
     }
 
-    pub fn search_graph(&mut self, start: Node, goal: Node,param : Option<&str>) -> Option<Pair>{
+    pub fn search_graph(&mut self, start: Node, goal: Node) -> Option<Pair>{
         let mut frontier = BinaryHeap::new();
         let mut distance_tracker = HashMap::new();
         for i in self.graph.keys(){
@@ -53,12 +53,7 @@ impl Graph{
             if p.node == goal{
                 return Some(p);
             }
-            let mut  x = 0usize;
-            if param.is_some(){
-                x = p.sum_of_cost_another();
-            }else{
-                x = p.sum_of_cost();
-            }
+            let mut  x = p.sum_of_cost();
             if x > distance_tracker.get(&p.node).copied().unwrap(){
                 continue;
             }
@@ -66,21 +61,15 @@ impl Graph{
                 let mut next = Pair::new(edge.node.clone());
                 next.store.extend(p.store.clone());
                 next.store.push(edge.clone());
-                let mut x =0;
-                if param.is_some() {
-                    x = next.sum_of_cost_another();
-                }else{
-                    x = next.sum_of_cost();
-                }
+                let mut x = next.sum_of_cost();
                 if x < distance_tracker.get(&edge.node).copied().unwrap(){
                     *distance_tracker.entry(edge.node.clone()).or_insert(0) = x;
                     frontier.push(next);
                 }
             }
         }
+    None
 
-
-        None
     }
 
 
@@ -89,7 +78,7 @@ impl Graph{
 #[derive(Debug,Hash,PartialOrd, PartialEq,Ord, Eq,Clone)]
 pub struct Edge {
     node: Node,
-    cost: usize,
+    pub cost: usize,
     pub train_no : String,
     pub location: u32,
 }
@@ -125,7 +114,7 @@ impl Display for Node{
     }
 }
 
-#[derive(Hash,Eq,PartialEq,Clone)]
+#[derive(Hash,Eq,PartialEq,Clone,Debug)]
 pub struct Pair{
     node: Node,
     pub store: Vec<Edge>,
@@ -143,10 +132,6 @@ impl Pair {
     pub fn sum_of_cost(&self) -> usize{
         self.store.iter().map(|s| s.cost).sum()
     }
-
-    pub fn sum_of_cost_another(&self) -> usize{
-        0
-    }
 }
 
 impl PartialOrd for Pair{
@@ -157,6 +142,6 @@ impl PartialOrd for Pair{
 
 impl Ord for Pair{
     fn cmp(&self, other: &Self) -> Ordering {
-        other.sum_of_cost_another().cmp(&self.sum_of_cost_another())
+        other.sum_of_cost().cmp(&self.sum_of_cost())
     }
 }
